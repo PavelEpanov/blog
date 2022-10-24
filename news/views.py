@@ -1,20 +1,47 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from .forms import NewsForm
-
 from .models import News, Category # Импортируем модель news из текущей директории
+from django.views.generic import ListView
 
 
-def index(request):
-    #print(dir(request))
-    news = News.objects.all()
-    #categories = Category.objects.all()
-    context = {
-        'news': news,
-        'title': 'Список новостей',
-        #'categories': categories,
-    }
-    return render(request, 'news/index.html', context)
+class HomeNews(ListView):
+    model = News # news = News.objects.all()
+    template_name = 'news/home_news_list.html'
+    context_object_name = 'news'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Главная страница'
+        return context
+
+    def get_queryset(self):
+        return News.objects.filter(is_published=True)
+
+class NewsByCategory(ListView):
+    model = News
+    template_name = 'news/home_news_list.html'
+    context_object_name = 'news'
+    allow_empty = False
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = Category.objects.get(pk=self.kwargs['category_id'])
+        return context
+
+    def get_queryset(self):
+        return News.objects.filter(category_id=self.kwargs['category_id'], is_published=True)
+
+
+# def index(request):
+#     #print(dir(request))
+#     news = News.objects.all()
+#     #categories = Category.objects.all()
+#     context = {
+#         'news': news,
+#         'title': 'Список новостей',
+#         #'categories': categories,
+#     }
+#     return render(request, 'news/index.html', context)
 
 
 def get_category(request, category_id: int):
@@ -35,9 +62,9 @@ def add_news(request, ):
     if request.method == 'POST':
         form = NewsForm(request.POST)
         if form.is_valid():
-            #print(form.cleaned_data)
-            News.objects.create(**form.cleaned_data)
-            redirect('home')
+            #news = News.objects.create(**form.cleaned_data) # Возвращает объект
+            news = form.save()
+            return redirect(news)
 
     else:
         form = NewsForm()
