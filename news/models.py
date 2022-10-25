@@ -15,9 +15,10 @@ class News(models.Model):
 
     category = models.ForeignKey('Category', on_delete=models.PROTECT, null=True, verbose_name='Категория') # Связанное свойство
 
-    def get_absolute_url(self):
-        return reverse('view_news', kwargs={'news_id': self.pk})
+    views = models.IntegerField(default=0)
 
+    def get_absolute_url(self):
+        return reverse('view_news', kwargs={'pk': self.pk})
 
     def __str__(self):
         return self.title
